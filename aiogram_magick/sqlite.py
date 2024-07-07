@@ -73,7 +73,7 @@ class SqliteStorageCache:
 class SqliteStorage(BaseStorage):
     """SQLite FSM storage."""
 
-    def __init__(self, filepath: str, idle_to_commit=1800):
+    def __init__(self, filepath: str, idle_to_commit: int = 1800):
         """Initalize a SQLite-based storage.
 
         Args:
@@ -93,10 +93,12 @@ class SqliteStorage(BaseStorage):
 
         self.__conn: Union[aiosqlite.Connection, None] = None
 
-    def __key_to_sqlite(self, key: StorageKey) -> str:
+    @staticmethod
+    def __key_to_sqlite(key: StorageKey) -> str:
         return f'{key.bot_id}:{key.chat_id}:{key.user_id}'
 
-    def __sqlite_to_key(self, value: str) -> StorageKey:
+    @staticmethod
+    def __sqlite_to_key(value: str) -> StorageKey:
         parts = value.split(':')
         return StorageKey(bot_id=int(parts[0]), chat_id=int(parts[1]), user_id=int(parts[2]))
 
@@ -111,22 +113,20 @@ class SqliteStorage(BaseStorage):
         self.__conn = await aiosqlite.connect(
             self.filepath, check_same_thread=False, detect_types=PARSE_DECLTYPES
         )
-        self.__conn.isolation_level = None  # FIXME(Python 3.12): Use .autocommit instead
+        self.__conn.isolation_level = None  # TODO: (Python 3.12 needed) Use .autocommit instead
         await self.__conn.executescript(
-            (
-                'CREATE TABLE IF NOT EXISTS "aiogram_states"('
-                '"Key"     StorageKey NOT NULL UNIQUE,'
-                '"State"   VARCHAR(100) DEFAULT NULL,'
-                '"Data"    TEXT,'
-                'PRIMARY KEY("Key")'
-                ');'
-                'CREATE UNIQUE INDEX IF NOT EXISTS "aiogram_states_keys" ON '
-                '"aiogram_states" ("Key");'
-            )
+            'CREATE TABLE IF NOT EXISTS "aiogram_states"('
+            '"Key"     StorageKey NOT NULL UNIQUE,'
+            '"State"   VARCHAR(100) DEFAULT NULL,'
+            '"Data"    TEXT,'
+            'PRIMARY KEY("Key")'
+            ');'
+            'CREATE UNIQUE INDEX IF NOT EXISTS "aiogram_states_keys" ON '
+            '"aiogram_states" ("Key");'
         )
         await self.__conn.commit()
 
-    async def _commit(self, force=False):
+    async def _commit(self, *, force: bool = False):
         if force or (int(time()) - self.__last_commit_ts) > self.idle_to_commit:
             await self.__connect()
             cursor = await self.__conn.cursor()
@@ -134,10 +134,10 @@ class SqliteStorage(BaseStorage):
             await cursor.execute('BEGIN')
             try:
                 for key, changes in self.__commit.items():  # Not thread-safe
-                    isStateChanged = 'state' in changes
-                    isDataChanged = 'data' in changes
+                    is_state_changed = 'state' in changes
+                    is_data_changed = 'data' in changes
 
-                    if isStateChanged and isDataChanged:
+                    if is_state_changed and is_data_changed:
                         await cursor.execute(
                             (
                                 'INSERT INTO aiogram_states (Key, State, Data) VALUES (?, ?, ?)'
@@ -150,7 +150,7 @@ class SqliteStorage(BaseStorage):
                                 jsonpickle.encode(changes['data']),
                             ),
                         )
-                    elif isStateChanged:
+                    elif is_state_changed:
                         await cursor.execute(
                             (
                                 'INSERT INTO aiogram_states (Key, State) VALUES (?, ?)'
@@ -170,8 +170,7 @@ class SqliteStorage(BaseStorage):
             except OperationalError as exc:
                 await cursor.execute('ROLLBACK')
                 if not force:
-                    raise exc
-                else:
-                    print_exception(exc)
+                    raise
+                print_exception(exc)
 
             self.__last_commit_ts = int(time())

@@ -1,30 +1,3 @@
-# As of 0.2.2, Ruff does not exclude files and folders from .gitignore.
-# Even if it was configured to do so.
-#
-# FIXME: Check if this issue is fixed
-exclude = [
-    # Byte-compiled / optimized / DLL files
-    "__pycache__/",
-    "*.py[cod]",
-    "*$py.class",
-
-    # Modules' leftovers
-    ".pytest_cache/",
-    ".ruff_cache/",
-    "node_modules/",
-    ".venv/",
-    "dist/",
-    "venv/",
-
-    # Build artifacts
-    "build/",
-
-    # Text editors, IDEs
-    ".vscode/",
-
-    # etc.
-    "*private*"
-]
 fix = false
 indent-width = 4
 line-length = 100
@@ -49,27 +22,90 @@ dummy-variable-rgx = "^_[a-zA-Z0-9_]+$"
 explicit-preview-rules = false
 # 'external' is left empty on purpose. This way we can adapt existing code to Ruff.
 external = []
-ignore = ["S404", "S603", "D211", "D213"]
-ignore-init-module-imports = false
-select = ["E", "W", "F", "B", "S", "C", "D", "I", "T100"]
+# Questionable usage:
+# - PD, PYI036, PYI051
+# Not needed:
+# - AIR
+# - COM812, COM818  (If the trailing comma is present, Ruff is configured not to compress the line any futher)
+# - CPY
+# - DTZ003, DTZ004, DTZ006, DTZ011, DTZ012
+# - DJ012
+# - EM
+# - FA100
+# - FIX002, FIX003, FIX004
+# - ICN
+# - INP
+# - PGH001, PGH002
+# - PYI001, PYI002, PYI006, PYI007, PYI008, PYI009, PYI010, PYI011, PYI012, PYI014, PYI015, PYI016, PYI017,
+#   PYI018, PYI019, PYI020, PYI021, PYI026, PYI029, PYI030, PYI033, PYI035, PYI035, PYI042, PYI043, PYI044,
+#   PYI046, PYI047, PYI048, PYI049, PYI050, PYI052, PYI053, PYI054, PYI056, PYI057, PYI063, PYI066
+# - T201, T203
+# - TD001, TD002, TD003, TD005
+# - TID
+# - Q
+ignore = [
+    "S404", "S603", "D211", "D213", "ANN101", "ANN102", "DTZ002", "PT004", "PT005",
+    "PT012", "SIM105", "PTH123", "N812", "N813", "PLE0116", "FURB101", "FURB103"
+]
+select = [
+    "E", "W", "F", "B", "S", "C", "D", "I", "T100", "ANN", "ISC", "TCH", "ERA",
+    "YTT", "ASYNC", "BLE", "FBT", "A", "COM819", "DTZ001", "DTZ005", "DJ", "EXE",
+    "FIX001", "FA102", "INT", "LOG", "G", "PIE", "PYI003", "PYI005", "PYI013",
+    "PYI024", "PYI025", "PYI032", "PYI034", "PYI041", "PYI045", "PYI055", "PYI058",
+    "PYI059", "PYI062", "PYI064", "PT", "RSE", "RET", "SLF", "SIM", "SLOT",
+    "TD004", "TD006", "TD007", "ARG", "PTH", "FLY", "NPY", "N", "PERF", "PGH003",
+    "PGH004", "PGH005", "PLC", "PLE", "PLR", "PLW", "UP", "FURB", "RUF", "TRY"
+]
 task-tags = ["TODO", "FIXME", "BUG"]
 
+[lint.flake8-annotations]
+ignore-fully-untyped = false
+mypy-init-return = true
+suppress-dummy-args = true
+suppress-none-returning = true
+
+[lint.flake8-bandit]
+check-typed-exception = true
+
 [lint.flake8-builtins]
-builtins-ignorelist = ["six.moves", "past.builtins", "future.builtins", "builtins", "io"]
+builtins-ignorelist = ["six.moves", "past.builtins", "future.builtins", "builtins", "io", "id"]
+
+[lint.flake8-comprehensions]
+allow-dict-calls-with-keyword-arguments = false
+
+[lint.flake8-gettext]
+function-names = ["_", "gettext"]
+
+[lint.flake8-implicit-str-concat]
+allow-multiline = true
 
 [lint.flake8-pytest-style]
+fixture-parentheses = false
+mark-parentheses = false
 parametrize-names-type = "tuple"
+parametrize-values-row-type = "tuple"
+parametrize-values-type = "list"
 
 [lint.flake8-quotes]
+avoid-escape = true
 docstring-quotes = "double"
 inline-quotes = "double"
 multiline-quotes = "double"
 
 [lint.flake8-type-checking]
+exempt-modules = ["typing", "typing_extensions"]
 quote-annotations = true
 strict = true
 
+[lint.flake8-unused-arguments]
+ignore-variadic-names = false
+
 [lint.isort]
+case-sensitive = true
+combine-as-imports = true
+force-sort-within-sections = false
+force-wrap-aliases = true
+from-first = false
 section-order = ["future", "standard-library", "first-party", "local-folder", "third-party"]
 
 [lint.pycodestyle]
